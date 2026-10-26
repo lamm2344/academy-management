@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Hệ thống quản lý học viên"
+description = "Ứng dụng tiếng Việt để quản lý học viên, khóa học, ngày và ca học, điểm danh, điểm thi và kết quả đào tạo."
+version = "1.0.0"
+id = "artifacts/academy-management"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25027
+
+[services.development]
+run = "pnpm --filter @workspace/academy-management run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/academy-management", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/academy-management/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25027"
+BASE_PATH = "/"

@@ -336,6 +336,9 @@ export async function customFetch<T = unknown>(
   }
 
   const headers = mergeHeaders(isRequest(input) ? input.headers : undefined, headersInit);
+  if (!["GET", "HEAD", "OPTIONS"].includes(method) && !headers.has("x-requested-with")) {
+    headers.set("x-requested-with", "hocvien");
+  }
 
   if (
     typeof init.body === "string" &&

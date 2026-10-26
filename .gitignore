@@ -2,17 +2,12 @@
 
 # compiled output
 dist
+generated-artifacts/
 tmp
 out-tsc
 *.tsbuildinfo
 .expo
 .expo-shared
-.next
-.turbo
-.svelte-kit
-.nuxt
-.output
-.vercel
 
 # dependencies
 node_modules

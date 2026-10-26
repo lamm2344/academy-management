@@ -2,14 +2,20 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
+  description: API cho hệ thống quản lý học viên, điểm danh và kết quả đào tạo.
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+    description: Trạng thái dịch vụ
+  - name: auth
+    description: Đăng nhập và phiên làm việc
+  - name: school
+    description: Dữ liệu đào tạo
+  - name: users
+    description: Tài khoản và phân quyền
 paths:
   /healthz:
     get:
@@ -24,6 +30,245 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/session:
+    get:
+      operationId: getSession
+      tags: [auth]
+      summary: Lấy phiên đăng nhập hiện tại
+      responses:
+        "200":
+          description: Trạng thái phiên hiện tại
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+  /login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Đăng nhập bằng tài khoản được cấp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          description: Sai tài khoản hoặc mật khẩu
+        "429":
+          description: Tạm khoá do đăng nhập sai nhiều lần
+  /logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Đăng xuất và huỷ phiên
+      responses:
+        "204":
+          description: Đã đăng xuất
+  /password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Đổi mật khẩu của tài khoản hiện tại
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "204":
+          description: Đã đổi mật khẩu
+        "400":
+          description: Mật khẩu không hợp lệ
+  /state:
+    get:
+      operationId: getSchoolState
+      tags: [school]
+      summary: Tải dữ liệu đào tạo theo quyền hiện tại
+      responses:
+        "200":
+          description: Toàn bộ dữ liệu cần cho các màn hình được phép
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StateResponse"
+        "401":
+          description: Chưa đăng nhập
+  /rev:
+    get:
+      operationId: getRevision
+      tags: [school]
+      summary: Kiểm tra phiên bản dữ liệu để đồng bộ
+      responses:
+        "200":
+          description: Phiên bản dữ liệu mới nhất
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionResponse"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [school]
+      summary: Tóm tắt số liệu và hoạt động gần đây
+      responses:
+        "200":
+          description: Số liệu tổng quan theo quyền hiện tại
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+  /doc:
+    put:
+      operationId: saveDocument
+      tags: [school]
+      summary: Lưu một nhóm dữ liệu với kiểm tra phân quyền phía máy chủ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentInput"
+      responses:
+        "200":
+          description: Đã lưu nhóm dữ liệu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionResponse"
+        "403":
+          description: Không đủ quyền
+    delete:
+      operationId: deleteDocument
+      tags: [school]
+      summary: Xoá nhóm dữ liệu được phép
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Đã xoá
+        "403":
+          description: Không đủ quyền
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: Danh sách tài khoản (chỉ Quản lý)
+      responses:
+        "200":
+          description: Danh sách người dùng không chứa mật khẩu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+        "403":
+          description: Không đủ quyền
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Tạo tài khoản
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Tài khoản đã tạo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "409":
+          description: Tên đăng nhập đã tồn tại
+  /users/{username}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Cập nhật tên hoặc vai trò tài khoản
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Tài khoản đã cập nhật
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Xoá tài khoản và thu hồi phiên đăng nhập
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Đã xoá
+  /users/{username}/password:
+    post:
+      operationId: resetUserPassword
+      tags: [users]
+      summary: Đặt lại mật khẩu cho tài khoản
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetInput"
+      responses:
+        "204":
+          description: Đã đặt lại mật khẩu
+  /restore:
+    post:
+      operationId: restoreBackup
+      tags: [school]
+      summary: Khôi phục dữ liệu từ tệp sao lưu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestoreInput"
+      responses:
+        "200":
+          description: Đã khôi phục dữ liệu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +278,308 @@ components:
           type: string
       required:
         - status
+    Role:
+      type: string
+      enum: [quanly, giangvien, trogiang]
+    User:
+      type: object
+      required: [username, name, role, mustChangePassword]
+      properties:
+        username: { type: string }
+        name: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        mustChangePassword: { type: boolean }
+    SessionResponse:
+      type: object
+      required: [user, defaultAdmin]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/User"
+            - type: "null"
+        defaultAdmin: { type: boolean }
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 64 }
+        password: { type: string, minLength: 1, maxLength: 256 }
+    ChangePasswordInput:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, minLength: 8, maxLength: 256 }
+    PasswordResetInput:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, minLength: 8, maxLength: 256 }
+    UserInput:
+      type: object
+      required: [username, name, role, password]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 64, pattern: "^[a-z0-9._-]+$" }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        role: { $ref: "#/components/schemas/Role" }
+        password: { type: string, minLength: 8, maxLength: 256 }
+    UserUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        role: { $ref: "#/components/schemas/Role" }
+    UserListResponse:
+      type: object
+      required: [users]
+      properties:
+        users:
+          type: array
+          items: { $ref: "#/components/schemas/User" }
+    RevisionResponse:
+      type: object
+      required: [rev]
+      properties:
+        rev: { type: integer, minimum: 0 }
+    CourseDay:
+      type: object
+      required: [date, shiftIds]
+      properties:
+        date: { type: string, format: date }
+        name: { type: ["string", "null"] }
+        shiftIds:
+          type: array
+          items: { type: string }
+    Course:
+      type: object
+      required: [id, name, shiftIds, days, attendanceMode, attendanceMax, attendanceAuto, gradeWeights, attendancePenalties, attendancePercentages]
+      properties:
+        id: { type: string }
+        name: { type: string, minLength: 1 }
+        startDate: { type: ["string", "null"], format: date }
+        shiftIds:
+          type: array
+          items: { type: string }
+        days:
+          type: array
+          items: { $ref: "#/components/schemas/CourseDay" }
+        attendanceMode:
+          type: string
+          enum: [session, penalty, percentage]
+        attendanceMax: { type: number, minimum: 0 }
+        attendanceAuto: { type: boolean }
+        attendanceCap: { type: ["number", "null"], minimum: 0 }
+        attendancePenalties:
+          type: object
+          required: [late, excused, unexcused]
+          properties:
+            late: { type: number, minimum: 0 }
+            excused: { type: number, minimum: 0 }
+            unexcused: { type: number, minimum: 0 }
+          additionalProperties: false
+        attendancePercentages:
+          type: object
+          required: [present, late, excused, unexcused]
+          properties:
+            present: { type: number, minimum: 0, maximum: 100 }
+            late: { type: number, minimum: 0, maximum: 100 }
+            excused: { type: number, minimum: 0, maximum: 100 }
+            unexcused: { type: number, minimum: 0, maximum: 100 }
+          additionalProperties: false
+        defaultSessionPoints: { type: number, minimum: 0 }
+        passMark: { type: ["number", "null"] }
+        gradeWeights:
+          type: object
+          properties:
+            attendance: { type: number, minimum: 0 }
+            group: { type: number, minimum: 0 }
+            bonus: { type: number, minimum: 0 }
+            evaluation: { type: number, minimum: 0 }
+            round1: { type: number, minimum: 0 }
+            round2: { type: number, minimum: 0 }
+            round3: { type: number, minimum: 0 }
+            round4: { type: number, minimum: 0 }
+          additionalProperties: false
+    Shift:
+      type: object
+      required: [id, name, startTime, endTime]
+      properties:
+        id: { type: string }
+        name: { type: string, minLength: 1 }
+        startTime: { type: string }
+        endTime: { type: string }
+    Student:
+      type: object
+      required: [id, courseId, name, nationalId, force]
+      properties:
+        id: { type: string }
+        courseId: { type: string }
+        name: { type: string, minLength: 1 }
+        nationalId: { type: string, minLength: 1 }
+        force: { type: string }
+    Internship:
+      type: object
+      required: [id, name, nationalId, position, militaryRank, status]
+      properties:
+        id: { type: string, minLength: 1, maxLength: 64 }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        nationalId: { type: string, minLength: 1, maxLength: 20 }
+        position: { type: string, minLength: 1, maxLength: 120 }
+        militaryRank: { type: string, minLength: 1, maxLength: 120 }
+        status:
+          type: string
+          enum: [Đang thực tập, Đã hoàn thành, Tạm dừng]
+    ExamScore:
+      type: object
+      required: [id, studentId, exam, point, date, note, by]
+      properties:
+        id: { type: string }
+        studentId: { type: string }
+        exam: { type: string, minLength: 1 }
+        point: { type: number, minimum: 0, maximum: 10 }
+        date: { type: string, format: date }
+        note: { type: string }
+        by: { type: string }
+    Violation:
+      type: object
+      required: [id, studentId, type, date, note, by]
+      properties:
+        id: { type: string }
+        studentId: { type: string }
+        type: { type: string }
+        date: { type: string, format: date }
+        note: { type: string }
+        by: { type: string }
+    Certificate:
+      type: object
+      required: [id, number, studentId, type, rank, unit, grade, date, note, revoked]
+      properties:
+        id: { type: string }
+        number: { type: string }
+        studentId: { type: string }
+        type: { type: string }
+        rank: { type: string }
+        unit: { type: string }
+        grade: { type: string }
+        date: { type: string, format: date }
+        expiresAt: { type: ["string", "null"], format: date }
+        note: { type: string }
+        revoked: { type: boolean }
+        by: { type: string }
+    GradeValues:
+      type: object
+      properties:
+        attendance: { type: ["number", "null"] }
+        group: { type: ["number", "null"] }
+        bonus: { type: ["number", "null"] }
+        evaluation: { type: ["number", "null"] }
+        round1: { type: ["number", "null"] }
+        round2: { type: ["number", "null"] }
+        round3: { type: ["number", "null"] }
+        round4: { type: ["number", "null"] }
+      additionalProperties: false
+    AttendanceRecord:
+      type: object
+      required: [studentId, status, note]
+      properties:
+        studentId: { type: string }
+        status: { type: string, enum: [present, late, excused, unexcused] }
+        note: { type: string }
+    AttendanceSession:
+      type: object
+      required: [courseId, date, shiftId, instructor, assistant, sessionPoints, records]
+      properties:
+        courseId: { type: string }
+        date: { type: string, format: date }
+        shiftId: { type: string }
+        instructor: { type: string }
+        assistant: { type: string }
+        sessionPoints: { type: number, minimum: 0 }
+        records:
+          type: array
+          items: { $ref: "#/components/schemas/AttendanceRecord" }
+    SchoolState:
+      type: object
+      required: [courses, students, shifts, examScores, violations, certificates, attendance, grades]
+      properties:
+        courses:
+          type: array
+          items: { $ref: "#/components/schemas/Course" }
+        students:
+          type: array
+          items: { $ref: "#/components/schemas/Student" }
+        internships:
+          type: array
+          items: { $ref: "#/components/schemas/Internship" }
+        shifts:
+          type: array
+          items: { $ref: "#/components/schemas/Shift" }
+        examScores:
+          type: array
+          items: { $ref: "#/components/schemas/ExamScore" }
+        violations:
+          type: array
+          items: { $ref: "#/components/schemas/Violation" }
+        certificates:
+          type: array
+          items: { $ref: "#/components/schemas/Certificate" }
+        attendance:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/AttendanceSession"
+        grades:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              $ref: "#/components/schemas/GradeValues"
+    StateResponse:
+      type: object
+      required: [me, rev, data, users]
+      properties:
+        me: { $ref: "#/components/schemas/User" }
+        rev: { type: integer, minimum: 0 }
+        data: { $ref: "#/components/schemas/SchoolState" }
+        users:
+          type: array
+          items: { $ref: "#/components/schemas/User" }
+    DocumentItem:
+      type: object
+      additionalProperties: true
+    DocumentValue:
+      oneOf:
+        - type: array
+          items: { $ref: "#/components/schemas/DocumentItem" }
+        - type: object
+          additionalProperties: true
+    DocumentInput:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+          pattern: "^(courses|students|internships|scores|violations|shifts|certificates|grades:[A-Za-z0-9_-]{1,64}|attendance:[A-Za-z0-9_|-]{1,100})$"
+        value: { $ref: "#/components/schemas/DocumentValue" }
+    DashboardResponse:
+      type: object
+      required: [courseCount, studentCount, absencesToday, violationCount, certificateCount, recentViolations]
+      properties:
+        courseCount: { type: integer }
+        studentCount: { type: integer }
+        absencesToday: { type: integer }
+        violationCount: { type: integer }
+        certificateCount: { type: integer }
+        recentViolations:
+          type: array
+          items: { $ref: "#/components/schemas/Violation" }
+    BackupSnapshot:
+      type: object
+      required: [version, exportedAt, data]
+      properties:
+        version: { type: integer }
+        exportedAt: { type: string, format: date-time }
+        data: { $ref: "#/components/schemas/SchoolState" }
+    RestoreInput:
+      type: object
+      required: [snapshot]
+      properties:
+        snapshot: { $ref: "#/components/schemas/BackupSnapshot" }
 

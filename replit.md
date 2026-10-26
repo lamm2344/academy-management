@@ -1,15 +1,15 @@
-# [Project name]
+# Hệ thống quản lý học viên
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Ứng dụng quản lý học viên, điểm danh, điểm thi và kết quả đào tạo của học viện.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- The Replit preview starts the academy web app and API server using their configured artifact workflows.
+- `pnpm --filter @workspace/academy-management run dev` — run the web app through its managed workflow.
+- `pnpm --filter @workspace/api-server run dev` — run the API through its managed workflow.
+- `pnpm run typecheck` — typecheck the workspace.
+- `pnpm --filter @workspace/db run push` — push development database schema changes.
+- The API uses Replit's `DATABASE_URL`. Set `ACADEMY_ADMIN_PASSWORD` in Replit Secrets before the first login to choose the initial admin password.
 
 ## Stack
 
@@ -30,7 +30,7 @@ _Populate as you build — non-obvious choices a reader couldn't infer from the 
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+The academy portal manages courses, student records, internships, attendance, exam scores, grade summaries, violations, certificates, and role-based accounts. Internship records are manager-only and include a national ID number.
 
 ## User preferences
 

@@ -1,0 +1,1 @@
+- [Attendance and grades](attendance-and-grades.md) — keep attendance out of the grade-entry summary while preserving its separate records.
